@@ -6,8 +6,15 @@ import { PluginInstanceContainerController } from "./PluginInstanceContainerCont
 import IContainerController from "@gluestack/framework/types/plugin/interface/IContainerController";
 import IHasContainerController from "@gluestack/framework/types/plugin/interface/IHasContainerController";
 import IGlueStorePlugin from "@gluestack/framework/types/store/interface/IGluePluginStore";
+import { IHasGraphqlInstance } from "./interfaces/IHasGraphqlnstance";
+import IManagesInstances from "@gluestack/framework/types/plugin/interface/IManagesInstances";
 
-export class PluginInstance implements IInstance, IHasContainerController, ILifeCycle
+export class PluginInstance
+  implements
+    IInstance,
+    IHasContainerController,
+    ILifeCycle,
+    IHasGraphqlInstance
 {
   app: IApp;
   name: string;
@@ -54,5 +61,23 @@ export class PluginInstance implements IInstance, IHasContainerController, ILife
 
   getContainerController(): IContainerController {
     return this.containerController;
+  }
+
+  getGraphqlInstance(): IInstance & IHasContainerController {
+    let graphqlInstance = null;
+    const graphql_instance = this.gluePluginStore.get("graphql_instance");
+    if (graphql_instance) {
+      const plugin: IPlugin & IManagesInstances = this.app.getPluginByName(
+        "@gluestack/glue-plugin-graphql",
+      );
+      if (plugin) {
+        plugin.getInstances().map((instance: IInstance) => {
+          if (instance.getName() === graphql_instance) {
+            graphqlInstance = instance;
+          }
+        });
+      }
+      return graphqlInstance;
+    }
   }
 }

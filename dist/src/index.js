@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,9 +42,10 @@ exports.__esModule = true;
 exports.GlueStackPlugin = void 0;
 var package_json_1 = __importDefault(require("../package.json"));
 var PluginInstance_1 = require("./PluginInstance");
+var attachGraphqlInstance_1 = require("./attachGraphqlInstance");
 var GlueStackPlugin = (function () {
     function GlueStackPlugin(app, gluePluginStore) {
-        this.type = 'devonly';
+        this.type = "devonly";
         this.app = app;
         this.instances = [];
         this.gluePluginStore = gluePluginStore;
@@ -66,14 +67,26 @@ var GlueStackPlugin = (function () {
         return "".concat(process.cwd(), "/node_modules/").concat(this.getName(), "/template");
     };
     GlueStackPlugin.prototype.getInstallationPath = function (target) {
-        return "./".concat(target);
+        return "";
     };
     GlueStackPlugin.prototype.runPostInstall = function (instanceName, target) {
         return __awaiter(this, void 0, void 0, function () {
+            var graphqlPlugin, hasuraConsoleInstance;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, this.app.createPluginInstance(this, instanceName, this.getTemplateFolderPath(), target)];
+                    case 0:
+                        graphqlPlugin = this.app.getPluginByName("@gluestack/glue-plugin-graphql");
+                        if (!graphqlPlugin || !graphqlPlugin.getInstances().length) {
+                            console.log("\x1b[36m");
+                            console.log("Install graphql instance: `node glue add graphql graphql-backend`");
+                            console.log("\x1b[31m");
+                            throw new Error("Graphql instance not installed from `@gluestack/glue-plugin-graphql`");
+                        }
+                        return [4, this.app.createPluginInstance(this, instanceName, this.getTemplateFolderPath(), target)];
                     case 1:
+                        hasuraConsoleInstance = _a.sent();
+                        return [4, (0, attachGraphqlInstance_1.attachGraphqlInstance)(hasuraConsoleInstance, graphqlPlugin.getInstances())];
+                    case 2:
                         _a.sent();
                         return [2];
                 }

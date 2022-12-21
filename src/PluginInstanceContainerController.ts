@@ -2,6 +2,7 @@ const { SpawnHelper, DockerodeHelper } = require("@gluestack/helpers");
 import IApp from "@gluestack/framework/types/app/interface/IApp";
 import IInstance from "@gluestack/framework/types/plugin/interface/IInstance";
 import IContainerController from "@gluestack/framework/types/plugin/interface/IContainerController";
+import { PluginInstance } from "./PluginInstance";
 
 export class PluginInstanceContainerController implements IContainerController {
   app: IApp;
@@ -9,15 +10,17 @@ export class PluginInstanceContainerController implements IContainerController {
   portNumber: number;
   containerId: string;
   dockerfile: string;
-  callerInstance: IInstance;
-  apiPortNumber: number
+  callerInstance: PluginInstance;
+  apiPortNumber: number;
 
-  constructor(app: IApp, callerInstance: IInstance) {
+  constructor(app: IApp, callerInstance: PluginInstance) {
     this.app = app;
     this.callerInstance = callerInstance;
     this.setStatus(this.callerInstance.gluePluginStore.get("status"));
     this.setPortNumber(this.callerInstance.gluePluginStore.get("port_number"));
-    this.setApiPortNumber(this.callerInstance.gluePluginStore.get("api_port_number"));
+    this.setApiPortNumber(
+      this.callerInstance.gluePluginStore.get("api_port_number"),
+    );
     this.setContainerId(
       this.callerInstance.gluePluginStore.get("container_id"),
     );
@@ -27,14 +30,26 @@ export class PluginInstanceContainerController implements IContainerController {
     return this.callerInstance;
   }
 
-  getEnv() { }
+  getEnv() {}
 
-  hasuraExist() {
-    return ["hasura", "--version"];
-  }
+  async hasuraConsole() {
+    const containerController = this.callerInstance
+      .getGraphqlInstance()
+      .getContainerController();
+    const env = await containerController.getEnv();
 
-  hasuraConsole() {
-    return ["hasura", "console", "--endpoint", "http://localhost:8080", "--admin-secret", "secret", "--console-port", this.getPortNumber().toString(), "--api-port", this.getApiPortNumber().toString()]
+    return [
+      "hasura",
+      "console",
+      "--endpoint",
+      `http://localhost:${containerController.getPortNumber()}`,
+      "--admin-secret",
+      env.HASURA_GRAPHQL_ADMIN_SECRET,
+      "--console-port",
+      this.getPortNumber().toString(),
+      "--api-port",
+      this.getApiPortNumber().toString(),
+    ];
   }
 
   getDockerJson() {
@@ -50,7 +65,7 @@ export class PluginInstanceContainerController implements IContainerController {
       return this.portNumber;
     }
     if (returnDefault) {
-      return 3100;
+      return 8090;
     }
   }
 
@@ -59,7 +74,7 @@ export class PluginInstanceContainerController implements IContainerController {
       return this.apiPortNumber;
     }
     if (returnDefault) {
-      return 4100;
+      return 9690;
     }
   }
 
@@ -77,9 +92,12 @@ export class PluginInstanceContainerController implements IContainerController {
     return (this.portNumber = portNumber || null);
   }
 
-  setApiPortNumber(portNumber: number) {
-    this.callerInstance.gluePluginStore.set("api_port_number", portNumber || null);
-    return (this.apiPortNumber = portNumber || null);
+  setApiPortNumber(apiPortNumber: number) {
+    this.callerInstance.gluePluginStore.set(
+      "api_port_number",
+      apiPortNumber || null,
+    );
+    return (this.apiPortNumber = apiPortNumber || null);
   }
 
   setContainerId(containerId: string) {
@@ -95,101 +113,140 @@ export class PluginInstanceContainerController implements IContainerController {
     return (this.dockerfile = dockerfile || null);
   }
 
-  getConfig(): any { }
+  getConfig(): any {}
 
   async up() {
-    if (this.getStatus() != "up") {
+    if (this.getStatus() !== "up") {
+      if (!this.callerInstance.getGraphqlInstance()) {
+        throw new Error(
+          `No graphql instance attached with ${this.callerInstance.getName()}`,
+        );
+      }
+      if (!this.callerInstance.getGraphqlInstance()?.getContainerController()) {
+        throw new Error(
+          `Not a valid graphql instance configured with ${this.callerInstance.getName()}`,
+        );
+      }
+      if (
+        this.callerInstance
+          .getGraphqlInstance()
+          ?.getContainerController()
+          ?.getStatus() !== "up"
+      ) {
+        throw new Error(
+          `Graphql is not up for instance ${this.callerInstance
+            .getGraphqlInstance()
+            .getName()}`,
+        );
+      }
+
       let ports =
-        this.callerInstance.callerPlugin.gluePluginStore.get("port_number") || [];
+        this.callerInstance.callerPlugin.gluePluginStore.get("port_number") ||
+        [];
       let apiPorts =
-        this.callerInstance.callerPlugin.gluePluginStore.get("api_port_number") || [];
+        this.callerInstance.callerPlugin.gluePluginStore.get(
+          "api_port_number",
+        ) || [];
 
       await new Promise(async (resolve, reject) => {
-        DockerodeHelper.getPort(this.getPortNumber(true), ports)
-
-          .then((port: number) => {
-            this.setPortNumber(port)
+        DockerodeHelper.getPort(this.getPortNumber(true), ports).then(
+          (port: number) => {
+            this.setPortNumber(port);
             DockerodeHelper.getPort(this.getApiPortNumber(true), apiPorts)
-
-              .then((apiPort: number) => {
-                this.setApiPortNumber(apiPort)
+              .then(async (apiPort: number) => {
+                this.setApiPortNumber(apiPort);
+                console.log("\x1b[33m");
+                console.log(
+                  `${this.callerInstance.getName()}: Running "${(
+                    await this.hasuraConsole()
+                  ).join(" ")}"`,
+                  "\x1b[0m",
+                );
                 SpawnHelper.start(
-                  this.callerInstance.getInstallationPath(),
-                  this.hasuraExist(),
+                  this.callerInstance
+                    .getGraphqlInstance()
+                    .getInstallationPath(),
+                  await this.hasuraConsole(),
                 )
-                  .then(
-                    () => {
-                      SpawnHelper.start(
-                        this.callerInstance.getInstallationPath(),
-                        this.hasuraConsole(),
-                      )
-                        .then(
-                          ({
-                            status,
-                            processId,
-                          }: {
-                            status: "up" | "down";
-                            processId: string;
-                          }) => {
-                            this.setStatus(status);
-                            this.setContainerId(processId);
-                            ports.push(port);
-                            apiPorts.push(apiPort);
-                            this.callerInstance.callerPlugin.gluePluginStore.set(
-                              "ports",
-                              ports,
-                            );
-                            this.callerInstance.callerPlugin.gluePluginStore.set(
-                              "api_port_number",
-                              apiPorts,
-                            );
-                            console.log("\x1b[32m");
-                            console.log(
-                              `Open http://localhost:${this.getPortNumber()}/ in browser`,
-                            );
-                            console.log("\x1b[0m");
-                            return resolve(true);
-                          },
-                        )
-                    }
-                  )
+                  .then(({ processId }: { processId: string }) => {
+                    this.setStatus("up");
+                    this.setContainerId(processId);
+                    ports.push(port);
+                    apiPorts.push(apiPort);
+                    this.callerInstance.callerPlugin.gluePluginStore.set(
+                      "ports",
+                      ports,
+                    );
+                    this.callerInstance.callerPlugin.gluePluginStore.set(
+                      "api_port_number",
+                      apiPorts,
+                    );
+
+                    console.log("\x1b[32m");
+                    console.log(
+                      `Open http://localhost:${this.getPortNumber()}/ in browser`,
+                    );
+                    console.log("\x1b[0m");
+                    return resolve(true);
+                  })
+                  .catch((err: any) => {
+                    reject(err);
+                  });
               })
-          })
-      })
+              .catch((err: any) => {
+                reject(err);
+              });
+          },
+        );
+      });
     }
   }
 
   async down() {
-    let ports =
-      this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
-    let consolePorts =
-      this.callerInstance.callerPlugin.gluePluginStore.get("api_port_number") || [];
-    await new Promise(async (resolve, reject) => {
-      DockerodeHelper.down(this.getContainerId(), this.callerInstance.getName())
-        .then(() => {
-          this.setStatus("down");
-          var index = ports.indexOf(this.getPortNumber());
-          if (index !== -1) {
-            ports.splice(index, 1);
-          }
-          this.callerInstance.callerPlugin.gluePluginStore.set("ports", ports);
+    if (this.getStatus() !== "down") {
+      let ports =
+        this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
+      let apiPorts =
+        this.callerInstance.callerPlugin.gluePluginStore.get(
+          "api_port_number",
+        ) || [];
 
-          var consoleIndex = consolePorts.indexOf(this.getApiPortNumber());
-          if (consoleIndex !== -1) {
-            consolePorts.splice(consoleIndex, 1);
-          }
-          this.callerInstance.callerPlugin.gluePluginStore.set("api_port_number", consolePorts);
+      await new Promise(async (resolve, reject) => {
+        DockerodeHelper.down(
+          this.getContainerId(),
+          this.callerInstance.getName(),
+        )
+          .then(() => {
+            this.setStatus("down");
+            var index = ports.indexOf(this.getPortNumber());
+            if (index !== -1) {
+              ports.splice(index, 1);
+            }
+            this.callerInstance.callerPlugin.gluePluginStore.set(
+              "ports",
+              ports,
+            );
 
-          this.setPortNumber(null);
-          this.setApiPortNumber(null);
-          this.setContainerId(null);
-          return resolve(true);
-        })
-        .catch((e: any) => {
-          return reject(e);
-        });
-    });
+            var apiIndex = apiPorts.indexOf(this.getApiPortNumber());
+            if (apiIndex !== -1) {
+              apiPorts.splice(apiIndex, 1);
+            }
+            this.callerInstance.callerPlugin.gluePluginStore.set(
+              "api_port_number",
+              apiPorts,
+            );
+
+            this.setPortNumber(null);
+            this.setApiPortNumber(null);
+            this.setContainerId(null);
+            return resolve(true);
+          })
+          .catch((e: any) => {
+            return reject(e);
+          });
+      });
+    }
   }
 
-  async build() { }
+  async build() {}
 }

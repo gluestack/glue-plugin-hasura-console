@@ -13,7 +13,9 @@
     "author": "Syed Yaseen",
     "license": "ISC",
     "dependencies": {
-        "@gluestack/helpers": "^0.0.7",
+        "@gluestack/helpers": "^0.0.8",
+        "@gluestack/framework": "^0.0.14",
+        "@gluestack/glue-plugin-graphql": "^0.0.2",
         "@types/node": "^18.11.17"
     },
     "main": "dist/src/index.js",
@@ -22,9 +24,12 @@
         "plugin-build": "tsc"
     },
     "devDependencies": {
+        "@gluestack/framework": "^0.0.14",
+        "@gluestack/glue-plugin-graphql": "^0.0.2",
         "typescript": "^4.9.4"
     },
     "peerDependencies": {
-        "@gluestack/framework": "^0.0.14"
+        "@gluestack/framework": "^0.0.14",
+        "@gluestack/glue-plugin-graphql": "^0.0.2"
     }
 }

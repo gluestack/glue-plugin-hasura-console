@@ -7,12 +7,13 @@ import IInstance from "@gluestack/framework/types/plugin/interface/IInstance";
 import ILifeCycle from "@gluestack/framework/types/plugin/interface/ILifeCycle";
 import IManagesInstances from "@gluestack/framework/types/plugin/interface/IManagesInstances";
 import IGlueStorePlugin from "@gluestack/framework/types/store/interface/IGluePluginStore";
+import { attachGraphqlInstance } from "./attachGraphqlInstance";
 
 //Do not edit the name of this class
 export class GlueStackPlugin implements IPlugin, IManagesInstances, ILifeCycle {
   app: IApp;
   instances: IInstance[];
-	type: 'stateless' | 'stateful' | 'devonly' = 'devonly';
+  type: "stateless" | "stateful" | "devonly" = "devonly";
   gluePluginStore: IGlueStorePlugin;
 
   constructor(app: IApp, gluePluginStore: IGlueStorePlugin) {
@@ -37,7 +38,7 @@ export class GlueStackPlugin implements IPlugin, IManagesInstances, ILifeCycle {
     return packageJSON.version;
   }
 
-  getType(): 'stateless' | 'stateful' | 'devonly' {
+  getType(): "stateless" | "stateful" | "devonly" {
     return this.type;
   }
 
@@ -46,15 +47,35 @@ export class GlueStackPlugin implements IPlugin, IManagesInstances, ILifeCycle {
   }
 
   getInstallationPath(target: string): string {
-    return `./${target}`;
+    return ``;
   }
 
   async runPostInstall(instanceName: string, target: string) {
-    await this.app.createPluginInstance(
-      this,
-      instanceName,
-      this.getTemplateFolderPath(),
-      target,
+    const graphqlPlugin: GlueStackPlugin = this.app.getPluginByName(
+      "@gluestack/glue-plugin-graphql",
+    );
+    //Validation
+    if (!graphqlPlugin || !graphqlPlugin.getInstances().length) {
+      console.log("\x1b[36m");
+      console.log(
+        `Install graphql instance: \`node glue add graphql graphql-backend\``,
+      );
+      console.log("\x1b[31m");
+      throw new Error(
+        "Graphql instance not installed from `@gluestack/glue-plugin-graphql`",
+      );
+    }
+
+    const hasuraConsoleInstance: PluginInstance =
+      await this.app.createPluginInstance(
+        this,
+        instanceName,
+        this.getTemplateFolderPath(),
+        target,
+      );
+    await attachGraphqlInstance(
+      hasuraConsoleInstance,
+      graphqlPlugin.getInstances(),
     );
   }
 

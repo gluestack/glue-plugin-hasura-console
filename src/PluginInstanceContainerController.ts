@@ -186,6 +186,20 @@ export class PluginInstanceContainerController implements IContainerController {
                     console.log(
                       `Open http://localhost:${this.getPortNumber()}/ in browser`,
                     );
+
+                    console.log("\x1b[0m");
+                    console.log("\x1b[36m");
+                    console.log(`Connect Database`);
+                    console.log();
+                    console.log(`Database URL:`);
+
+                    console.log(
+                      `${this.callerInstance
+                        .getGraphqlInstance()
+                        .getPostgresInstance()
+                        .getConnectionString()}`,
+                    );
+
                     console.log("\x1b[0m");
                     return resolve(true);
                   })

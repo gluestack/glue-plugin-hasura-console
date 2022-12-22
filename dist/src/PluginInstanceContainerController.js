@@ -187,6 +187,15 @@ var PluginInstanceContainerController = (function () {
                                                             console.log("\x1b[32m");
                                                             console.log("Open http://localhost:".concat(_this.getPortNumber(), "/ in browser"));
                                                             console.log("\x1b[0m");
+                                                            console.log("\x1b[36m");
+                                                            console.log("Connect Database");
+                                                            console.log();
+                                                            console.log("Database URL:");
+                                                            console.log("".concat(_this.callerInstance
+                                                                .getGraphqlInstance()
+                                                                .getPostgresInstance()
+                                                                .getConnectionString()));
+                                                            console.log("\x1b[0m");
                                                             return resolve(true);
                                                         })["catch"](function (err) {
                                                             reject(err);

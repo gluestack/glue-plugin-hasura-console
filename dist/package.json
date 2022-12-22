@@ -1,6 +1,6 @@
 {
     "name": "@gluestack/glue-plugin-hasura-console",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "hasura console devonly plugin for gluestack framework",
     "repository": {
         "type": "git",

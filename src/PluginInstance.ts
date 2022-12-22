@@ -8,6 +8,7 @@ import IHasContainerController from "@gluestack/framework/types/plugin/interface
 import IGlueStorePlugin from "@gluestack/framework/types/store/interface/IGluePluginStore";
 import { IHasGraphqlInstance } from "./interfaces/IHasGraphqlnstance";
 import IManagesInstances from "@gluestack/framework/types/plugin/interface/IManagesInstances";
+import { PluginInstance as GraphqlPluginInstance} from "@gluestack/glue-plugin-graphql/src/PluginInstance";
 
 export class PluginInstance
   implements
@@ -63,7 +64,7 @@ export class PluginInstance
     return this.containerController;
   }
 
-  getGraphqlInstance(): IInstance & IHasContainerController {
+  getGraphqlInstance(): GraphqlPluginInstance {
     let graphqlInstance = null;
     const graphql_instance = this.gluePluginStore.get("graphql_instance");
     if (graphql_instance) {
@@ -71,7 +72,7 @@ export class PluginInstance
         "@gluestack/glue-plugin-graphql",
       );
       if (plugin) {
-        plugin.getInstances().map((instance: IInstance) => {
+        plugin.getInstances().map((instance: GraphqlPluginInstance) => {
           if (instance.getName() === graphql_instance) {
             graphqlInstance = instance;
           }

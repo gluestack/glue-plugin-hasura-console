@@ -54,28 +54,38 @@ var PluginInstanceContainerController = (function () {
     PluginInstanceContainerController.prototype.getEnv = function () { };
     PluginInstanceContainerController.prototype.hasuraConsole = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var containerController, env;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var containerController, env, _a, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         containerController = this.callerInstance
                             .getGraphqlInstance()
                             .getContainerController();
                         return [4, containerController.getEnv()];
                     case 1:
-                        env = _a.sent();
-                        return [2, [
-                                "hasura",
-                                "console",
-                                "--endpoint",
-                                "http://localhost:".concat(containerController.getPortNumber()),
-                                "--admin-secret",
-                                env.HASURA_GRAPHQL_ADMIN_SECRET,
-                                "--console-port",
-                                this.getPortNumber().toString(),
-                                "--api-port",
-                                this.getApiPortNumber().toString(),
-                            ]];
+                        env = _c.sent();
+                        _a = ["hasura",
+                            "console",
+                            "--endpoint"];
+                        _b = "http://localhost:".concat;
+                        return [4, containerController.getPortNumber()];
+                    case 2:
+                        _a = _a.concat([
+                            _b.apply("http://localhost:", [_c.sent()]),
+                            "--admin-secret",
+                            env.HASURA_GRAPHQL_ADMIN_SECRET,
+                            "--console-port"
+                        ]);
+                        return [4, this.getPortNumber()];
+                    case 3:
+                        _a = _a.concat([
+                            (_c.sent()).toString(),
+                            "--api-port"
+                        ]);
+                        return [4, this.getApiPortNumber()];
+                    case 4: return [2, _a.concat([
+                            (_c.sent()).toString()
+                        ])];
                 }
             });
         });
@@ -87,20 +97,48 @@ var PluginInstanceContainerController = (function () {
         return this.status;
     };
     PluginInstanceContainerController.prototype.getPortNumber = function (returnDefault) {
-        if (this.portNumber) {
-            return this.portNumber;
-        }
-        if (returnDefault) {
-            return 8090;
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2, new Promise(function (resolve, reject) {
+                        if (_this.portNumber) {
+                            return resolve(_this.portNumber);
+                        }
+                        var ports = _this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
+                        DockerodeHelper.getPort(8090, ports)
+                            .then(function (port) {
+                            _this.setPortNumber(port);
+                            ports.push(port);
+                            _this.callerInstance.callerPlugin.gluePluginStore.set("ports", ports);
+                            return resolve(_this.portNumber);
+                        })["catch"](function (e) {
+                            reject(e);
+                        });
+                    })];
+            });
+        });
     };
     PluginInstanceContainerController.prototype.getApiPortNumber = function (returnDefault) {
-        if (this.apiPortNumber) {
-            return this.apiPortNumber;
-        }
-        if (returnDefault) {
-            return 9690;
-        }
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2, new Promise(function (resolve, reject) {
+                        if (_this.apiPortNumber) {
+                            return resolve(_this.apiPortNumber);
+                        }
+                        var ports = _this.callerInstance.callerPlugin.gluePluginStore.get("api_ports") || [];
+                        DockerodeHelper.getPort(9690, ports)
+                            .then(function (port) {
+                            _this.setApiPortNumber(port);
+                            ports.push(port);
+                            _this.callerInstance.callerPlugin.gluePluginStore.set("api_ports", ports);
+                            return resolve(_this.apiPortNumber);
+                        })["catch"](function (e) {
+                            reject(e);
+                        });
+                    })];
+            });
+        });
     };
     PluginInstanceContainerController.prototype.getContainerId = function () {
         return this.containerId;
@@ -129,7 +167,6 @@ var PluginInstanceContainerController = (function () {
     PluginInstanceContainerController.prototype.up = function () {
         var _a, _b, _c;
         return __awaiter(this, void 0, void 0, function () {
-            var ports_1, apiPorts_1;
             var _this = this;
             return __generator(this, function (_d) {
                 switch (_d.label) {
@@ -147,105 +184,101 @@ var PluginInstanceContainerController = (function () {
                                 .getGraphqlInstance()
                                 .getName()));
                         }
-                        ports_1 = this.callerInstance.callerPlugin.gluePluginStore.get("port_number") ||
-                            [];
-                        apiPorts_1 = this.callerInstance.callerPlugin.gluePluginStore.get("api_port_number") || [];
                         return [4, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+                                var _a, _b, _c, _d, _e, _f, _g;
                                 var _this = this;
-                                return __generator(this, function (_a) {
-                                    DockerodeHelper.getPort(this.getPortNumber(true), ports_1).then(function (port) {
-                                        _this.setPortNumber(port);
-                                        DockerodeHelper.getPort(_this.getApiPortNumber(true), apiPorts_1)
-                                            .then(function (apiPort) { return __awaiter(_this, void 0, void 0, function () {
-                                            var _a, _b, _c, _d, _e, _f, _g;
-                                            var _this = this;
-                                            return __generator(this, function (_h) {
-                                                switch (_h.label) {
-                                                    case 0:
-                                                        this.setApiPortNumber(apiPort);
-                                                        console.log("\x1b[33m");
-                                                        _b = (_a = console).log;
-                                                        _d = (_c = "".concat(this.callerInstance.getName(), ": Running \"")).concat;
-                                                        return [4, this.hasuraConsole()];
-                                                    case 1:
-                                                        _b.apply(_a, [_d.apply(_c, [(_h.sent()).join(" "), "\""]), "\x1b[0m"]);
-                                                        _f = (_e = SpawnHelper).start;
-                                                        _g = [this.callerInstance
-                                                                .getGraphqlInstance()
-                                                                .getInstallationPath()];
-                                                        return [4, this.hasuraConsole()];
-                                                    case 2:
-                                                        _f.apply(_e, _g.concat([_h.sent()]))
-                                                            .then(function (_a) {
-                                                            var processId = _a.processId;
-                                                            _this.setStatus("up");
-                                                            _this.setContainerId(processId);
-                                                            ports_1.push(port);
-                                                            apiPorts_1.push(apiPort);
-                                                            _this.callerInstance.callerPlugin.gluePluginStore.set("ports", ports_1);
-                                                            _this.callerInstance.callerPlugin.gluePluginStore.set("api_port_number", apiPorts_1);
-                                                            console.log("\x1b[32m");
-                                                            console.log("Open http://localhost:".concat(_this.getPortNumber(), "/ in browser"));
-                                                            console.log("\x1b[0m");
-                                                            console.log("\x1b[36m");
-                                                            console.log("Connect Database");
-                                                            console.log();
-                                                            console.log("Database URL:");
-                                                            console.log("".concat(_this.callerInstance
-                                                                .getGraphqlInstance()
-                                                                .getPostgresInstance()
-                                                                .getConnectionString()));
-                                                            console.log("\x1b[0m");
-                                                            return resolve(true);
-                                                        })["catch"](function (err) {
-                                                            reject(err);
-                                                        });
-                                                        return [2];
-                                                }
+                                return __generator(this, function (_h) {
+                                    switch (_h.label) {
+                                        case 0:
+                                            console.log("\x1b[33m");
+                                            _b = (_a = console).log;
+                                            _d = (_c = "".concat(this.callerInstance.getName(), ": Running \"")).concat;
+                                            return [4, this.hasuraConsole()];
+                                        case 1:
+                                            _b.apply(_a, [_d.apply(_c, [(_h.sent()).join(" "), "\""]), "\x1b[0m"]);
+                                            _f = (_e = SpawnHelper).start;
+                                            _g = [this.callerInstance.getGraphqlInstance().getInstallationPath()];
+                                            return [4, this.hasuraConsole()];
+                                        case 2:
+                                            _f.apply(_e, _g.concat([_h.sent()]))
+                                                .then(function (_a) {
+                                                var processId = _a.processId;
+                                                return __awaiter(_this, void 0, void 0, function () {
+                                                    return __generator(this, function (_b) {
+                                                        switch (_b.label) {
+                                                            case 0:
+                                                                this.setStatus("up");
+                                                                this.setContainerId(processId);
+                                                                return [4, this.print()];
+                                                            case 1:
+                                                                _b.sent();
+                                                                return [2, resolve(true)];
+                                                        }
+                                                    });
+                                                });
+                                            })["catch"](function (err) {
+                                                reject(err);
                                             });
-                                        }); })["catch"](function (err) {
-                                            reject(err);
-                                        });
-                                    });
-                                    return [2];
+                                            return [2];
+                                    }
                                 });
                             }); })];
                     case 1:
                         _d.sent();
-                        _d.label = 2;
-                    case 2: return [2];
+                        return [3, 4];
+                    case 2: return [4, this.print()];
+                    case 3:
+                        _d.sent();
+                        _d.label = 4;
+                    case 4: return [2];
+                }
+            });
+        });
+    };
+    PluginInstanceContainerController.prototype.print = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, _b, _c, _d, _e, _f;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
+                    case 0:
+                        console.log("\x1b[32m");
+                        _b = (_a = console).log;
+                        _c = "Open http://localhost:".concat;
+                        return [4, this.getPortNumber()];
+                    case 1:
+                        _b.apply(_a, [_c.apply("Open http://localhost:", [_g.sent(), "/ in browser"])]);
+                        console.log("\x1b[0m");
+                        console.log("\x1b[36m");
+                        console.log("Connect Database");
+                        console.log();
+                        console.log("Database URL:");
+                        _e = (_d = console).log;
+                        _f = "".concat;
+                        return [4, this.callerInstance
+                                .getGraphqlInstance()
+                                .getPostgresInstance()
+                                .getConnectionString()];
+                    case 2:
+                        _e.apply(_d, [_f.apply("", [_g.sent()])]);
+                        console.log("\x1b[0m");
+                        return [2];
                 }
             });
         });
     };
     PluginInstanceContainerController.prototype.down = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var ports_2, apiPorts_2;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         if (!(this.getStatus() !== "down")) return [3, 2];
-                        ports_2 = this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
-                        apiPorts_2 = this.callerInstance.callerPlugin.gluePluginStore.get("api_port_number") || [];
                         return [4, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
                                 var _this = this;
                                 return __generator(this, function (_a) {
                                     DockerodeHelper.down(this.getContainerId(), this.callerInstance.getName())
                                         .then(function () {
                                         _this.setStatus("down");
-                                        var index = ports_2.indexOf(_this.getPortNumber());
-                                        if (index !== -1) {
-                                            ports_2.splice(index, 1);
-                                        }
-                                        _this.callerInstance.callerPlugin.gluePluginStore.set("ports", ports_2);
-                                        var apiIndex = apiPorts_2.indexOf(_this.getApiPortNumber());
-                                        if (apiIndex !== -1) {
-                                            apiPorts_2.splice(apiIndex, 1);
-                                        }
-                                        _this.callerInstance.callerPlugin.gluePluginStore.set("api_port_number", apiPorts_2);
-                                        _this.setPortNumber(null);
-                                        _this.setApiPortNumber(null);
                                         _this.setContainerId(null);
                                         return resolve(true);
                                     })["catch"](function (e) {

@@ -8,7 +8,7 @@ import IHasContainerController from "@gluestack/framework/types/plugin/interface
 import IGlueStorePlugin from "@gluestack/framework/types/store/interface/IGluePluginStore";
 import { IHasGraphqlInstance } from "./interfaces/IHasGraphqlnstance";
 import IManagesInstances from "@gluestack/framework/types/plugin/interface/IManagesInstances";
-import { PluginInstance as GraphqlPluginInstance} from "@gluestack/glue-plugin-graphql/src/PluginInstance";
+import { PluginInstance as GraphqlPluginInstance } from "@gluestack/glue-plugin-graphql/src/PluginInstance";
 
 export class PluginInstance
   implements
@@ -37,6 +37,7 @@ export class PluginInstance
     this.callerPlugin = callerPlugin;
     this.gluePluginStore = gluePluginStore;
     this.installationPath = installationPath;
+    //@ts-ignore
     this.containerController = new PluginInstanceContainerController(app, this);
   }
 

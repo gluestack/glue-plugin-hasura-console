@@ -73,10 +73,13 @@ export class GlueStackPlugin implements IPlugin, IManagesInstances, ILifeCycle {
         this.getTemplateFolderPath(),
         target,
       );
-    await attachGraphqlInstance(
-      hasuraConsoleInstance,
-      graphqlPlugin.getInstances(),
-    );
+    if (hasuraConsoleInstance) {
+      await attachGraphqlInstance(
+        hasuraConsoleInstance,
+        graphqlPlugin.getInstances(),
+      );
+      hasuraConsoleInstance.getContainerController().up();
+    }
   }
 
   createInstance(

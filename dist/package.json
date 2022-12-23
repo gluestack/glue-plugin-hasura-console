@@ -1,6 +1,6 @@
 {
     "name": "@gluestack/glue-plugin-hasura-console",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "hasura console devonly plugin for gluestack framework",
     "repository": {
         "type": "git",
@@ -15,7 +15,7 @@
     "dependencies": {
         "@gluestack/helpers": "^0.0.8",
         "@gluestack/framework": "^0.0.14",
-        "@gluestack/glue-plugin-graphql": "^0.0.5",
+        "@gluestack/glue-plugin-graphql": "^0.0.7",
         "@types/node": "^18.11.17"
     },
     "main": "dist/src/index.js",
@@ -25,11 +25,11 @@
     },
     "devDependencies": {
         "@gluestack/framework": "^0.0.14",
-        "@gluestack/glue-plugin-graphql": "^0.0.5",
+        "@gluestack/glue-plugin-graphql": "^0.0.7",
         "typescript": "^4.9.4"
     },
     "peerDependencies": {
         "@gluestack/framework": "^0.0.14",
-        "@gluestack/glue-plugin-graphql": "^0.0.5"
+        "@gluestack/glue-plugin-graphql": "^0.0.7"
     }
 }

@@ -85,13 +85,15 @@ var GlueStackPlugin = (function () {
                         return [4, this.app.createPluginInstance(this, instanceName, this.getTemplateFolderPath(), target)];
                     case 1:
                         hasuraConsoleInstance = _a.sent();
-                        if (!hasuraConsoleInstance) return [3, 3];
+                        if (!hasuraConsoleInstance) return [3, 4];
                         return [4, (0, attachGraphqlInstance_1.attachGraphqlInstance)(hasuraConsoleInstance, graphqlPlugin.getInstances())];
                     case 2:
                         _a.sent();
-                        hasuraConsoleInstance.getContainerController().up();
-                        _a.label = 3;
-                    case 3: return [2];
+                        return [4, hasuraConsoleInstance.getContainerController().up()];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [2];
                 }
             });
         });

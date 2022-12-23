@@ -68,7 +68,7 @@ export class PluginInstanceContainerController implements IContainerController {
       }
       let ports =
         this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
-      DockerodeHelper.getPort(8090, ports)
+      DockerodeHelper.getPort(11690, ports)
         .then((port: number) => {
           this.setPortNumber(port);
           ports.push(port);
@@ -88,7 +88,7 @@ export class PluginInstanceContainerController implements IContainerController {
       }
       let ports =
         this.callerInstance.callerPlugin.gluePluginStore.get("api_ports") || [];
-      DockerodeHelper.getPort(9690, ports)
+      DockerodeHelper.getPort(10890, ports)
         .then((port: number) => {
           this.setApiPortNumber(port);
           ports.push(port);

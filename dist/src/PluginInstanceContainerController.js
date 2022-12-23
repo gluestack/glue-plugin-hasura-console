@@ -105,7 +105,7 @@ var PluginInstanceContainerController = (function () {
                             return resolve(_this.portNumber);
                         }
                         var ports = _this.callerInstance.callerPlugin.gluePluginStore.get("ports") || [];
-                        DockerodeHelper.getPort(8090, ports)
+                        DockerodeHelper.getPort(11690, ports)
                             .then(function (port) {
                             _this.setPortNumber(port);
                             ports.push(port);
@@ -127,7 +127,7 @@ var PluginInstanceContainerController = (function () {
                             return resolve(_this.apiPortNumber);
                         }
                         var ports = _this.callerInstance.callerPlugin.gluePluginStore.get("api_ports") || [];
-                        DockerodeHelper.getPort(9690, ports)
+                        DockerodeHelper.getPort(10890, ports)
                             .then(function (port) {
                             _this.setApiPortNumber(port);
                             ports.push(port);
